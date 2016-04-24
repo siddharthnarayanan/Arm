@@ -1,0 +1,104 @@
+class Looper extends BaseIOIOLooper {
+private DigitalOutput pinM1up;
+private DigitalOutput pinM1down;
+private DigitalOutput pinM5left;
+private DigitalOutput pinM5right;
+private HttpClient httpClient;
+private HttpGet httpGet;
+private boolean processingWebservice = false;
+@Override
+protected void setup() throws ConnectionLostException {
+this.httpClient = new DefaultHttpClient();
+this.httpGet = new HttpGet("http://192.168.1.9:8080/diy/eatQueueItem");
+pinM1up = ioio_.openDigitalOutput(19, DigitalOutput.Spec.Mode.OPEN_DRAIN,
+pinM1down = ioio_.openDigitalOutput(18, DigitalOutput.Spec.Mode.OPEN_DRAIN,
+pinM5left = ioio_.openDigitalOutput(26, DigitalOutput.Spec.Mode.OPEN_DRAIN,
+pinM5right = ioio_.openDigitalOutput(14, DigitalOutput.Spec.Mode.OPEN_DRAIN,
+}
+/**
+* Called repetitively while the IOIO is connected.
+*/
+@Override
+public void loop() throws ConnectionLostException {
+if (!processingWebservice)
+pullNextDirection();
+pinM1up.write(!m1up);
+pinM1down.write(!m1down);
+pinM5left.write(!m5left);
+pinM5right.write(!m5right);
+?
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+
+93
+94
+95
+96
+97
+try {
+Thread.sleep(100);
+} catch (InterruptedException ignore) {
+}
+}
+public void pullNextDirection() {
+processingWebservice = true;
+try {
+HttpResponse response = httpClient.execute(httpGet);
+HttpEntity entity = response.getEntity();
+
+try {
+is.close();
+} catch (IOException e) {
+e.printStackTrace();
+}
+
+processDirection(-1, "STOP");
+}
+} catch (JSONException e) {
+e.printStackTrace();
+}
+}
+else {
+processDirection(-1, "STOP");
+
+Newer Post Home Older Post
+The
