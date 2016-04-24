@@ -1,0 +1,252 @@
+@Controller
+public class HomeController {
+@Autowired
+private ServletContext servletContext;
+private static final Logger logger = LoggerFactory.getLogger(HomeController.
+@RequestMapping(value = "/", method = RequestMethod.GET)
+public String home() {
+?
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+public String home() {
+logger.info("Welcome home!");
+return "leapdata";
+}
+@SuppressWarnings("unchecked")
+@RequestMapping(value = "/listDirections", method = RequestMethod.GET)
+public String listOfDirections(Model model) {
+List<queueitem> queue = (List<queueitem>) servletContext
+.getAttribute("queue");
+model.addAttribute("queue", queue);
+return "listDirections";
+}
+@RequestMapping(value = "/saveDirection", method = RequestMethod.GET, headers =
+@ResponseBody
+public void saveDirection(@RequestParam Integer direction) {
+logger.info("Getting direction :" + direction);
+if (direction != null) {
+saveToQueue(direction);
+}
+}
+@RequestMapping(value = "/eatQueueItem", method = RequestMethod.GET, headers =
+@ResponseBody
+public ResponseEntity<string> eatQueueItem() {
+logger.info("Eating");
+QueueItem lastItem = getLastItem();
+HttpHeaders headers = new HttpHeaders();
+headers.add("Content-Type", "application/json; charset=utf-8");
+if (lastItem == null) {
+return new ResponseEntity<string>(headers, HttpStatus.NOT_FOUND);
+}
+return new ResponseEntity<string>(lastItem.toJSON(), headers,HttpStatus.OK);
+}
+@SuppressWarnings("unchecked")
+private QueueItem getLastItem() {
+List<queueitem> queue = (List<queueitem>) servletContext.getAttribute("queue"
+if (queue != null && !queue.isEmpty())
+return ((LinkedList<queueitem>) queue).removeLast();
+else
+return null;
+}
+@SuppressWarnings("unchecked")
+private void saveToQueue(Integer direction) {
+List<queueitem> queue = (List<queueitem>) servletContext.getAttribute("queue"
+if (queue == null) {
+queue = new LinkedList<queueitem>();
+servletContext.setAttribute("queue", queue);
+}
+if (!queue.isEmpty()) {
+QueueItem queueItem = ((LinkedList<queueitem>) queue).getLast();
+if (!queueItem.getDirection().equals(direction)) {
+queue.add(new QueueItem(direction));
+}
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+}
+} else {
+queue.add(new QueueItem(direction));
+}
+}
+static public class QueueItem {
+private Integer direction = -1;
+private String strDirection = "STOP";
+public QueueItem(Integer direction) {
+this.direction = direction;
+switch (direction) {
+case -1:
+logger.info("STOP");
+strDirection = "STOP";
+break;
+case 1:
+logger.info("RIGHT");
+strDirection = "RIGHT";
+break;
+case 2:
+logger.info("LEFT");
+strDirection = "LEFT";
+break;
+case 3:
+logger.info("UP");
+strDirection = "UP";
+break;
+case 4:
+logger.info("DOWN");
+strDirection = "DOWN";
+break;
+default:
+logger.info("STOP DEFAULT");
+strDirection = "STOP";
+break;
+}
+}
+public Integer getDirection() {
+return direction;
+}
+public void setDirection(Integer direction) {
+this.direction = direction;
+}
+public String getStrDirection() {
+return strDirection;
+}
+public void setStrDirection(String strDirection) {
+this.strDirection = strDirection;
+}
+public String toJSON(){
+return new JSONSerializer().exclude("*.class").serialize(this);
+}
+}
+}
+The first thing that happens in the controller is the wiring of the servlet context. Since we
+did not want to set up Hibernate for this simple app, we decided to save the leap data in
+the servlet context. The home method displays the leap web page. The saveDirection
+method is called using ajax in the leap web page to save the leap data. The
+eatQueueItem method is the method that is used to retrieved the leap data. Other
+methods are used for testing.
+Once the server is started and the leap motion is used by moving your hand over it, the
+data is queued up on the server. We decided to use an Android phone to pull the data
+from the web server. We added a REST web service code to the IOIO control code. The
+web service makes a request to eatQueueItem method and gets back a JSON string that
+we then use to decide which I/O pins to turn on in the IOIO. Here is the web service code
+used in the Android app :
+130
+131
+}
+</queueitem></queueitem>
