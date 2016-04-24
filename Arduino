@@ -1,0 +1,130 @@
+<script type="text/javascript" src="<c:url value="/resources/js/leap.js"/>"></script>
+
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+<script type="text/javascript" src="<c:url value="/resources/js/jquery-2.0.3.min.js
+<script>
+var paused = false;
+window.onkeypress = function(e) {
+if (e.charCode == 32) {
+if (paused == false) {
+paused = true;
+} else {
+paused = false;
+}
+}
+};
+var controller = new Leap.Controller({
+enableGestures : false
+});
+controller.loop(function(frame) {
+latestFrame = frame;
+if (paused) {
+document.getElementById('pause').innerHTML = "<strong>PAUSED</strong>"
+return;
+} else {
+document.getElementById('pause').innerHTML = "";
+}
+var str = "";
+for ( var i in frame.handsMap) {
+var hand = frame.handsMap[i];
+var direction = -1;
+document.getElementById("direction").innerHTML = "STOP";
+if (hand.roll() < -0.5) {
+document.getElementById("direction").innerHTML = "RIGHT";
+direction = 1;
+} else if (hand.roll() > 0.5) {
+document.getElementById("direction").innerHTML = "LEFT";
+direction = 2;
+} else if (hand.pitch() > 0.5) {
+document.getElementById("direction").innerHTML = "UP";
+direction = 3;
+} else if (hand.pitch() < -0.5) {
+document.getElementById("direction").innerHTML = "DOWN";
+direction = 4;
+}
+$.getJSON(
+"${pageContext.request.contextPath}/saveDirection?direction="
++ direction, function(result) {
+});
+str += "<p>" + "<strong>Roll:</strong> " + hand.roll()
++ "
+<strong>Pitch:</strong> " + hand.pitch()
++ "
+<strong>Yaw:</strong> " + hand.yaw()
++ "</p>";
+}
+console.log(str);
+document.getElementById('out').innerHTML = str;
+});
+</script>
+It starts with some basic wiring for the pause key. All the leap code runs inside the
+controller loop. For each frame, basic data segment returned by leap, we check the hand
+object. We wired the roll to left and right arm movements and pitch to up and down arm
+movements. We send the pitch and roll data to the server using ajax and jQuery. The
+leap runs at a high frame rate; for each frame it calls the server. (This is not optimal and in
+a real app we would limit the chatter between leap and the server.)
+The laptop is running a server that runs the leap web page and saves the leap data. We
+really like Spring framework (http://projects.spring.io/spring-framework/) and for most of
+our Java web apps we use Spring and Spring MVC. If you are working with Spring and
+setting up a new project the best way to do it is to use Spring Tool Suite (STS). STS is
+an Eclipse based IDE that has been designed for Spring development. We created a
+blank Spring MVC project and set up the tc server developer edition to use with the app.
+The server is integrated with STS so that makes for easy setup. We also added flexjson
+dependency to the pom.xml Maven file. The flexjson library is used for serializing object
+to JSON and it is the one I prefer to use. A setup detail that is often missed with a Maven
+project structure is that any resources like JavaScript and CSS should be placed in
+resources directory under webapp directory. You should also have the resources
+mapping the servlet-contect.xml.
+<!-- Handles HTTP GET requests for /resources/** by efficiently serving up static
+resources in the ${webappRoot}/resources directory -->
+<resources mapping="/resources/**" location="/resources/" />
+We placed both the jQuery and leap Javascript in the resources directory. Since this is a
+simple app we used a single controller for all of the requests. We mapped the main
+request and a few other requests for testing purposes in the HomeController.java. Here is
+the controller:
+63
+64
+65
+66
+67
+68
+69
+70
+71
+</script>
+<body>
+<div id="pause"></div>
+<div id="out"></div>
+<h3>Direction</h3>
+<div id="direction"></div>
+</body>
